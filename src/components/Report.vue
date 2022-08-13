@@ -1,20 +1,35 @@
 <template>
   <v-row justify="center">
     <v-col xl="8" sm="10" xs="12">
-      <v-textarea label="Copier coller ici votre rapport infocompte" no-resize rows="10" v-model="reportText" />
+      <v-textarea label="Copier coller ici votre rapport infocompte" no-resize rows="10" v-model="reportText" @change="updateReportBackgroundColor"/>
     </v-col>
   </v-row>
   <template v-if="reportData">
-    <ReportDisplay :rp="reportData"/>
+    <v-row justify="center">
+      <v-col xl="8" sm="10" xs="12" align="right" class="mb-0 mt-0 pb-0 pt-0">
+        <v-icon size="x-large" @click="exportToImg">mdi-image-move</v-icon>
+      </v-col>
+    </v-row>
+    <v-row>
+      <v-spacer/>
+      <v-col xl="8" sm="10" xs="12" class="mb-0 mt-0 pb-0 pt-0">
+        <ReportDisplay :rp="reportData"/>
+      </v-col>
+      <v-spacer/>
+    </v-row>
   </template>
   
 </template>
 
 <script>
+import ThemeMixin from "../mixins/ThemeMixin.js";
 import ReportDisplay from "./ReportDisplay.vue";
+import { toPng } from 'html-to-image';
+
 
 export default {
   name: 'Report',
+  mixins: [ThemeMixin],
   components: {
     ReportDisplay
   },
@@ -207,8 +222,32 @@ export default {
       catch {
         return num;
       }
-    }
-  },
+    },
+    exportToImg() {
+      const node = document.getElementById('ReportDisplay');
+      toPng(node)
+      .then(function (dataUrl) {
+        var img = new Image();
+        img.src = dataUrl;
+        document.body.appendChild(img);
+      })
+      .catch(function (error) {
+        console.error('oops, something went wrong!', error);
+      });
+      
+    },
+    
+  }
 }
 
 </script>
+
+<style>
+  .firstColumn {
+    white-space: nowrap; 
+    text-overflow: ellipsis; 
+    overflow: hidden; 
+    width: 220px;
+    max-width: 220px;
+  }
+</style>

@@ -18,11 +18,12 @@
 </template>
 
 <script>
-import { useTheme } from 'vuetify';
 import Report from "./Report.vue";
+import ThemeMixin from "../mixins/ThemeMixin.js";
 
 export default {
   name: 'Root',
+  mixins: [ThemeMixin],
   components: {
     Report
   },
@@ -36,13 +37,9 @@ export default {
   },
   methods: {
     onThemeChange() {
-      this.theme.global.name.value = this.theme.global.current.value.dark ? 'light' : 'dark';
-      console.log(this.theme.global);
+      this.$vuetify.theme.global.name = this.$vuetify.theme.global.current.dark ? 'light' : 'dark';
+      this.updateReportBackgroundColor();
     }
-  },
-  setup () {
-    const theme = useTheme();
-    return { theme };
   }
 }
 
