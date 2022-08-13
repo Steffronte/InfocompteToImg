@@ -7,7 +7,7 @@
   <template v-if="reportData">
     <v-row justify="center">
       <v-col xl="8" sm="10" xs="12" align="right" class="mb-0 mt-0 pb-0 pt-0">
-        <v-icon size="x-large" @click="exportToImg">mdi-image-move</v-icon>
+        <v-icon size="x-large" class="shake" @click="exportToImg">mdi-image-move</v-icon>
       </v-col>
     </v-row>
     <v-row>
@@ -18,7 +18,12 @@
       <v-spacer/>
     </v-row>
   </template>
-  
+  <v-snackbar v-model="isCopied" color="success" :height=alertHeight>
+    <v-row justify="center" align="center" class="ma-7">
+      <v-icon size="50">mdi-clipboard-check</v-icon>
+      <span class="pl-2" style="font-size: 40px;">Rapport copié!</span> 
+    </v-row>
+    </v-snackbar>
 </template>
 
 <script>
@@ -34,7 +39,8 @@ export default {
     ReportDisplay
   },
   data: () => ({
-    reportText: ""
+    reportText: "",
+    isCopied: false
   }),
   computed: {
     reportData() {
@@ -155,6 +161,9 @@ export default {
       console.log(data);
       return data;
     },
+    alertHeight() {
+      return window.innerHeight/2;
+    }
   },
   methods: {
     parsePlanetLines(lines, i, array) {
@@ -223,18 +232,14 @@ export default {
         return num;
       }
     },
-    exportToImg() {
+    async exportToImg() {
       const node = document.getElementById('ReportDisplay');
       toPng(node)
-      .then(function (dataUrl) {
-        var img = new Image();
-        img.src = dataUrl;
-        document.body.appendChild(img);
-      })
-      .catch(function (error) {
-        console.error('oops, something went wrong!', error);
-      });
-      
+      .then(fetch)
+      .then((base64Response) => base64Response.blob())
+      .then((blob) => navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]))
+      .then(() => this.isCopied = true)
+      .catch((error) => console.error('oops, something went wrong!', error));
     },
     
   }
@@ -250,4 +255,46 @@ export default {
     width: 220px;
     max-width: 220px;
   }
+
+  .shake {
+	-webkit-animation: shake 2.8s both;
+  -webkit-animation-iteration-count: 3;
+	        animation: shake 2.8s both;
+          animation-iteration-count: 3;
+}
+
+/* Keyframes for the wobble animation */
+
+@keyframes shake {
+  0% {
+    -webkit-transform: translateX(0%);
+    transform: translateX(0%);
+    -webkit-transform-origin: 50%50%;
+    transform-origin: 50%50%;
+  }
+  7.5% {
+    -webkit-transform: translateX(-30px)rotate(-6deg);
+    transform: translateX(-30px)rotate(-6deg);
+  }
+  15% {
+    -webkit-transform: translateX(15px)rotate(6deg);
+    transform: translateX(15px)rotate(6deg);
+  }
+  22.5% {
+    -webkit-transform: translateX(-15px)rotate(-3.6deg);
+    transform: translateX(-15px)rotate(-3.6deg);
+  }
+  30% {
+    -webkit-transform: translateX(9px)rotate(2.4deg);
+    transform: translateX(9px)rotate(2.4deg);
+  }
+  37.5% {
+    -webkit-transform: translateX(-6px)rotate(-1.2deg);
+    transform: translateX(-6px)rotate(-1.2deg);
+  }
+  100% {
+    -webkit-transform: translateX(-6px)rotate(0deg);
+    transform: translateX(-6px)rotate(0deg);
+  }
+}
 </style>
