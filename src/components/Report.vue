@@ -277,7 +277,7 @@ export default {
         data.planetBuilds[0].values.length, 
         data.mines[0].values.length, 
         data.ships[0].values.length);
-      container.style.width = (410 + nbPlanet * 50) + "px";
+      container.style.width = Math.max(800, 410 + nbPlanet * 50) + "px";
     }
   }
 }
