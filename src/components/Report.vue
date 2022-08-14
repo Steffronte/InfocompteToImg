@@ -25,11 +25,12 @@
   </v-snackbar>
   <v-snackbar v-model="isError" color="error" :height=alertHeight :timeout="-1" >
     <v-row justify="center" align="center" class="ma-7">
-      <v-icon size="50">mdi-alert-circle</v-icon>
-      <span class="pl-2" style="font-size: 20px;">
+      <v-icon size="50" class="mb-2">mdi-alert-circle</v-icon>
+      <p class="pl-2 mb-5" style="font-size: 20px;">
         Sorry, something went wrong! If you paste a full report without BBcode, please send it to the developper so he can reproduce and fix the bug.
-      </span>
-      <br/>
+        <br/><br/>
+        Firefox users need to enable dom.events.asyncClipboard.clipboardItem in about:config
+      </p>
       <v-btn color="indigo" text @click="isError = false">
           Close
       </v-btn>
@@ -267,7 +268,7 @@ export default {
       .then((base64Response) => base64Response.blob())
       .then((blob) => navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]))
       .then(() => this.isCopied = true)
-      .catch(() => this.isError = true)
+      .catch((err) => console.error(err))
       .finally(() => this.isLoading = false);
     },
     resizeContainer(data) {
