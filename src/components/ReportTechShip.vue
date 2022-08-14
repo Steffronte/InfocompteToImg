@@ -6,7 +6,7 @@
       </tr>
       <tr v-for="(subline, index2) in line.values" :key="index2">
         <td class="pa-1 firstColumn">{{subline.title}}</td>
-        <td width="50" class="pa-1 text-center">{{subline.value}}</td>
+        <td width="48" class="pa-1 text-center">{{subline.value}}</td>
       </tr>
     </template>
   </table>

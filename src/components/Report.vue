@@ -1,21 +1,20 @@
 <template>
   <v-row justify="center">
-    <v-col xl="8" sm="10" xs="12">
-      <v-textarea label="Copier coller ici votre rapport infocompte" no-resize rows="10" v-model="reportText" @change="updateReportBackgroundColor"/>
+    <v-col>
+      <v-textarea label="Coller ici un rapport infocompte sans BBcode / Paste here an infocompte full report without BBcode" no-resize rows="10" v-model="reportText" @change="updateReportBackgroundColor"/>
     </v-col>
   </v-row>
   <template v-if="reportData">
     <v-row justify="center">
-      <v-col xl="8" sm="10" xs="12" align="right" class="mb-0 mt-0 pb-0 pt-0">
-        <v-icon size="x-large" class="shake" @click="exportToImg">mdi-image-move</v-icon>
+      <v-col align="right" class="mb-0 mt-0 pb-0 pt-0">
+        <v-icon size="x-large" id="imageMove" :class="imgMoveDisplay" @click="exportToImg">mdi-image-move</v-icon>
+        <v-icon v-if="isLoading" size="x-large" class="spin">mdi-loading</v-icon>
       </v-col>
     </v-row>
     <v-row>
-      <v-spacer/>
-      <v-col xl="8" sm="10" xs="12" class="mb-0 mt-0 pb-0 pt-0">
+      <v-col class="mb-0 mt-0 pb-0 pt-0">
         <ReportDisplay :rp="reportData"/>
       </v-col>
-      <v-spacer/>
     </v-row>
   </template>
   <v-snackbar v-model="isCopied" color="success" :height=alertHeight>
@@ -23,7 +22,19 @@
       <v-icon size="50">mdi-clipboard-check</v-icon>
       <span class="pl-2" style="font-size: 40px;">Rapport copié!</span> 
     </v-row>
-    </v-snackbar>
+  </v-snackbar>
+  <v-snackbar v-model="isError" color="error" :height=alertHeight :timeout="-1" >
+    <v-row justify="center" align="center" class="ma-7">
+      <v-icon size="50">mdi-alert-circle</v-icon>
+      <span class="pl-2" style="font-size: 20px;">
+        Sorry, something went wrong! If you paste a full report without BBcode, please send it to the developper so he can reproduce and fix the bug.
+      </span>
+      <br/>
+      <v-btn color="indigo" text @click="isError = false">
+          Close
+      </v-btn>
+    </v-row>
+  </v-snackbar>
 </template>
 
 <script>
@@ -40,15 +51,37 @@ export default {
   },
   data: () => ({
     reportText: "",
-    isCopied: false
+    isCopied: false,
+    isLoading: false,
+    isError: false,
+    errorMessage: ""
   }),
   computed: {
     reportData() {
       if(!this.reportText || this.reportText == "") {
         return null;
       }
-
-      const lines = this.reportText.split("\n").filter(l => l != "").map(l => l.trim());
+      
+      try {
+        const lines = this.reportText.split("\n").filter(l => l != "").map(l => l.trim());
+        const data = this.parse(lines);
+        this.resizeContainer(data);
+        return data;
+      }
+      catch {
+        this.isError = true;
+        return null;
+      }
+    },
+    alertHeight() {
+      return window.innerHeight/2;
+    },
+    imgMoveDisplay() {
+      return this.isLoading ? "hide" : "";
+    }
+  },
+  methods: {
+    parse(lines) {
       const data = {
         title: lines[0],
         subtitle: lines[1],
@@ -135,7 +168,6 @@ export default {
 
       data.moonSubtitle = lines[i];
       i += 2;
-      console.log(lines[i]);
       i += this.parsePlanetLines(lines, i, data.moonStorages);
 
       i++;
@@ -158,14 +190,8 @@ export default {
       i++;
       i += this.parsePlanetLines(lines, i, data.moonDefenses);
 
-      console.log(data);
       return data;
     },
-    alertHeight() {
-      return window.innerHeight/2;
-    }
-  },
-  methods: {
     parsePlanetLines(lines, i, array) {
       let j = 0;
       for(; i + j < lines.length && lines[i+j].startsWith("|"); j++) {
@@ -181,7 +207,7 @@ export default {
         title: otherData[0],
         total: this.formatNumber(otherData[2]),
         totalLabel: otherData[1],
-        values: splitted.slice(1, splitted.length -2).map(n => this.formatNumber(n))
+        values: splitted.slice(1, splitted.length - 1).map(n => this.formatNumber(n))
       }
     },
     parseShipTech(lines, i, array) {
@@ -233,37 +259,59 @@ export default {
       }
     },
     async exportToImg() {
+      this.isLoading = true;
       const node = document.getElementById('ReportDisplay');
+
       toPng(node)
       .then(fetch)
       .then((base64Response) => base64Response.blob())
       .then((blob) => navigator.clipboard.write([new ClipboardItem({[blob.type]: blob})]))
       .then(() => this.isCopied = true)
-      .catch((error) => console.error('oops, something went wrong!', error));
+      .catch(() => this.isError = true)
+      .finally(() => this.isLoading = false);
     },
-    
+    resizeContainer(data) {
+      const container = document.getElementById('appContainer');
+      const nbPlanet = Math.max(
+        data.planetTiles[0].values.length, 
+        data.planetBuilds[0].values.length, 
+        data.mines[0].values.length, 
+        data.ships[0].values.length);
+      container.style.width = (410 + nbPlanet * 50) + "px";
+    }
   }
 }
 
 </script>
 
 <style>
-  .firstColumn {
-    white-space: nowrap; 
-    text-overflow: ellipsis; 
-    overflow: hidden; 
-    width: 220px;
-    max-width: 220px;
-  }
-
-  .shake {
-	-webkit-animation: shake 2.8s both;
-  -webkit-animation-iteration-count: 3;
-	        animation: shake 2.8s both;
-          animation-iteration-count: 3;
+.firstColumn {
+  white-space: nowrap; 
+  text-overflow: ellipsis; 
+  overflow: hidden; 
+  width: 220px;
+  max-width: 220px;
 }
 
-/* Keyframes for the wobble animation */
+#imageMove {
+-webkit-animation: shake 2.8s both;
+-webkit-animation-iteration-count: 3;
+        animation: shake 2.8s both;
+        animation-iteration-count: 3;
+}
+
+.hide {
+  visibility: hidden;
+}
+
+.spin {
+  animation: 2s infinite spin;
+}
+
+@keyframes spin {
+    from {transform: rotate(0deg)}
+    to {transform: rotate(360deg)}
+}
 
 @keyframes shake {
   0% {

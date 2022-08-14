@@ -1,6 +1,6 @@
 <template>
   <v-row>
-    <v-col class="mt-0 pl-5 pr-5 pb-2 pt-2" id="ReportDisplay">
+    <v-col class="mt-0 pl-5 pr-0 pb-2 pt-2" id="ReportDisplay">
       <h1 class="text-center">{{rp.title}}</h1>
       <h2 class="text-center mb-4">{{rp.subtitle}}</h2>
       <img src="../assets/points.png"/> <!-- :src="rp.pointImg"-->
